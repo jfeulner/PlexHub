@@ -3,36 +3,37 @@
 #Run script to clear .unionfs-fuse folder and remove specified hidden files from ACD since unionfs mounts can't delete files from read-only mount
 /bin/bash /home/plex/scripts/clearCache.sh >> /home/plex/scripts/logs/clearCache.log
 
+
 #Set variables
 today=$(date +%Y-%m-%d)
 suffix=".mkv"
 
 #Upload to ACD and Google Drive, syncing the individual folder from ACD to Google Drive
-#/usr/sbin/rclone move --log-file=/home/plex/scripts/logs/uploadACD.${today}.log /home/plex/.local/RsStxAAoxauX7JdGnbYnyJYc/ acd:Plex/RsStxAAoxauX7JdGnbYnyJYc
-#telegram-send "I have just completed uploading $radarr_movie_title to ACD."
-#sleep 120s
+#telegram-send "Starting to upload  $sonarr_series_title season $sonarr_episodefile_seasonnumber to ACD."
+#echo "Uploading to ACD"
 
-#/usr/sbin/rclone sync --log-file=/home/plex/scripts/logs/sync.${today}.log "/home/plex/acd/Movies" "Google:Plex/Movies" --exclude *.fuse_hidden* --checkers 20
-#telegram-send "I have just completed uploading $radarr_movie_title to Google Drive."
-#sleep 120s
+## comment if ACD is down
+#/usr/sbin/rclone move --log-file=/home/plex/scripts/logs/uploadACD.${today}.log /home/plex/.local/dYd0BjOcDD332suc5vEtc7mg/ acd:Plex/dYd0BjOcDD332suc5vEtc7mg --size-only
+#telegram-send "I have just completed uploading a $sonarr_series_title season $sonarr_episodefile_seasonnumber to ACD. Waiting for Sync"
 
-##Ucomment lines below if disabling ACD. This will turn GDrive into the preferred uploader. NOTE - Mine is unencrypted.
+#telegram-send "Starting to upload  $sonarr_series_title season $sonarr_episodefile_seasonnumber to Google Drive."
+#echo "Uploading to Google Drive"
+#/usr/sbin/rclone sync --log-file=/home/plex/scripts/logs/sync.${today}.log "/home/plex/acd/Shows/$sonarr_series_title/Season $sonarr_episodefile_seasonnumber" "Google:Plex/Shows/$sonarr_series_title/Season $sonarr_episodefile_seasonnumber" --exclude *.fuse_hidden* --checkers 20
+#telegram-send "I have just completed uploading a $sonarr_Series_title season $sonarr_episodefile_seasonnumber episode $sonarr_episodefile_scenename to Google Drive."
 
-##Uncomment if GDrive is down
-telegram-send "Uploading $radarr_movie_title to Google Drive."
-/usr/sbin/rclone move --no-traverse --log-file=/home/plex/scripts/logs/uploadACD.${today}.log /home/plex/local/Movies/ Google:Plex/Movies
-telegram-send "Completed uploading $radarr_movie_title to GDrive"
+##Use if ACD is down
+telegram-send "Starting to upload  $sonarr_series_title season $sonarr_episodefile_seasonnumber to Google Drive."
+/usr/sbin/rclone move --no-traverse --log-file=/home/plex/scripts/logs/uploadACD.${today}.log /home/plex/local/Shows Google:Plex/Shows
+telegram-send "Completed uploading to Google drive"
 
-sleep 360s # Sleeping for 5, before Library scan. Adjust to your needs.
+
+sleep 120s
 
 # Remove empty directories
-find "/home/plex/local/Movies" -mindepth 1 -type d -empty -delete
+find "/home/plex/local/Shows" -mindepth 1 -type d -empty -delete
 
-#Update Plex library
 export LD_LIBRARY_PATH=/usr/lib/plexmediaserver
 export PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=/var/lib/plexmediaserver/Library/Application\ Support
-/usr/lib/plexmediaserver/Plex\ Media\ Scanner -s -c 3 -d "/home/plex/source/Movies/$radarr_movie_title" #Onlyscans the movie folder.
-
-telegram-send "Plex library update script completed. $radarr_movie_title shall show up shortly!"
-
-exit
+/usr/lib/plexmediaserver/Plex\ Media\ Scanner -s -c 5 -d "/home/plex/source/Shows/$sonarr_series_title/Season $sonarr_episodefile_seasonnumber"
+telegram-send "Plex library scan complete"
+  exit
